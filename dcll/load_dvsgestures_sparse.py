@@ -15,6 +15,7 @@ import h5py
 import glob
 from .events_timeslices import *
 import os
+import tqdm
 dcll_folder = os.path.dirname(__file__)
 
 mapping = { 0 :'Hand Clapping'  ,
@@ -249,35 +250,39 @@ def create_events_hdf5(hdf5_filename):
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
 
-        print("processing training data...")
+        #print("processing training data...")
         key = 0
         train_grp = f.create_group('train')
-        for file_d in fns_train:
-            print(key)
-            events, labels = aedat_to_events(file_d)
-            subgrp = train_grp.create_group(str(key))
-            dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
-            dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
-            dset_dt[...] = events[:,0]
-            dset_da[...] = events[:,1:]
-            dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
-            dset_l[...] = labels
-            key += 1
+        with tqdm(total=len(fns_train)) as pbar:
+            pbar.set_description('Processing Training Data: ')
+            for file_d in fns_train:
+                events, labels = aedat_to_events(file_d)
+                subgrp = train_grp.create_group(str(key))
+                dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
+                dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
+                dset_dt[...] = events[:,0]
+                dset_da[...] = events[:,1:]
+                dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
+                dset_l[...] = labels
+                key += 1
+                pbar.update(1)
 
-        print("processing testing data...")
+        #print("processing testing data...")
         key = 0
         test_grp = f.create_group('test')
-        for file_d in fns_test:
-            print(key)
-            events, labels = aedat_to_events(file_d)
-            subgrp = test_grp.create_group(str(key))
-            dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
-            dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
-            dset_dt[...] = events[:,0]
-            dset_da[...] = events[:,1:]
-            dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
-            dset_l[...] = labels
-            key += 1
+        with tqdm(total=len(fns_test)) as pbar:
+            pbar.set_description('Processing Test Data: ')
+            for file_d in fns_test:
+                events, labels = aedat_to_events(file_d)
+                subgrp = test_grp.create_group(str(key))
+                dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
+                dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
+                dset_dt[...] = events[:,0]
+                dset_da[...] = events[:,1:]
+                dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
+                dset_l[...] = labels
+                key += 1
+                pbar.update(1)
 
         stats =  gather_gestures_stats(train_grp)
         f.create_dataset('stats',stats.shape, dtype = stats.dtype)
