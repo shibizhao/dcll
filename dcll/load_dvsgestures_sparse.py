@@ -283,7 +283,7 @@ def create_events_hdf5(hdf5_filename):
         f.create_dataset('stats',stats.shape, dtype = stats.dtype)
         f['stats'][:] = stats
 
-def create_data(filename = os.path.join(dcll_folder, '../data/dvs_gestures_events.hdf5'),
+def create_data(filename = os.path.join(dcll_folder, '../../data/DvsGesture/dvs_gestures_events.hdf5'),
                 batch_size = 64 , chunk_size = 500, size = [2, 32, 32], ds = 4, dt = 1000):
     if not os.path.isfile(filename):
         print("File {} does not exist: converting DvsGesture to h5file".format(filename))
