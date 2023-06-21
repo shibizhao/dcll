@@ -169,9 +169,7 @@ def compute_start_time(labels,pad):
     label = labels[l0[0],0]
     tbegin = labels[l0[0],1]
     tend = labels[l0[0],2]-pad
-    #print(tbegin, labels[l0[0],2], tend)
-    #start_time = np.random.randint(tbegin, tend)
-    start_time = tbegin
+    start_time = np.random.randint(tbegin, tend)
     return start_time, label
 
 def next(hdf5_group, stats, batch_size = 32, T = 500, n_classes = 11, ds = 2, size = [2, 64, 64], dt = 1000):
@@ -182,27 +180,20 @@ def next(hdf5_group, stats, batch_size = 32, T = 500, n_classes = 11, ds = 2, si
     batch_idx_l = np.empty(batch_size, dtype= 'int')
     for i, b in (enumerate(batch_idx)):
         dset = hdf5_group[str(b)]
-        labels = dset['labels'][()]
-        #labels = dset['labels'].value
+        labels = dset['labels'].value
         cand_batch = -1
         while cand_batch is -1: #catches some mislabeled data
             start_time, label = compute_start_time(labels, pad = 2*T*dt)
             batch_idx_l[i] = label-1
             #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
-            cand_batch = get_event_slice(dset['time'][()], dset['data'], start_time, T, ds=ds, size=size, dt=dt)
-            #cand_batch = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
+            cand_batch = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
         batch[i] = cand_batch
 
     #print(batch_idx_l)
     return batch, expand_targets(one_hot(batch_idx_l, n_classes), T).astype('float')
 
 def next_1ofeach(hdf5_group, T = 500, n_classes = 11, ds = 2, size = [2, 64, 64], dt = 1000, offset = 0):
-    
-#    for k,v in hdf5_group.items():
-#        print(v['labels'][()])
-    
-    batch_1of_each = {k:range(len(v['labels'][()])) for k,v in hdf5_group.items()}
-    #batch_1of_each = {k:range(len(v['labels'].value)) for k,v in hdf5_group.items()}
+    batch_1of_each = {k:range(len(v['labels'].value)) for k,v in hdf5_group.items()}
     batch_size = np.sum([len(v) for v in batch_1of_each.values()]).astype(int)
     batch = np.empty([batch_size,T]+size, dtype='float')
     batch_idx_l = np.empty(batch_size, dtype= 'int')
@@ -210,16 +201,12 @@ def next_1ofeach(hdf5_group, T = 500, n_classes = 11, ds = 2, size = [2, 64, 64]
     for b,v in batch_1of_each.items():
         for l0 in v:
             dset = hdf5_group[str(b)]
-
-            labels = dset['labels'][()]
-            #labels = dset['labels'].value
+            labels = dset['labels'].value
             label = labels[l0,0]
             batch_idx_l[i] = label-1
             start_time = labels[l0,1] + offset*dt
             #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
-            
-            batch[i] = get_event_slice(dset['time'][()], dset['data'], start_time, T, ds=ds, size=size, dt=dt)
-            #batch[i] = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
+            batch[i] = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
             i += 1
     return batch, expand_targets(one_hot(batch_idx_l, n_classes), T).astype('float')
 
@@ -243,8 +230,8 @@ def get_event_slice(times, addrs, start_time, T, size = [128,128], ds = 1, dt = 
         return -1
 
 def create_events_hdf5(hdf5_filename):
-    fns_train = gather_aedat(os.path.join(dcll_folder, '../../data/DvsGesture'),1,24)
-    fns_test = gather_aedat(os.path.join(dcll_folder, '../../data/DvsGesture'),24,30)
+    fns_train = gather_aedat(os.path.join(dcll_folder, '../data/DvsGesture'),1,24)
+    fns_test = gather_aedat(os.path.join(dcll_folder, '../data/DvsGesture'),24,30)
 
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
@@ -291,8 +278,8 @@ def create_data(filename = os.path.join(dcll_folder, '../data/dvs_gestures_event
     else:
         print("File {} exists: not re-converting DvsGesture".format(filename))
 
-    strain = SequenceGenerator(filename=filename, group='train', batch_size = batch_size, chunk_size = chunk_size, size = size, ds = ds, dt= dt)
-    stest  = SequenceGenerator(filename=filename, group='test', batch_size = batch_size, chunk_size = chunk_size, size = size, ds = ds, dt= dt)
+    strain = SequenceGenerator(group='train', batch_size = batch_size, chunk_size = chunk_size, size = size, ds = ds, dt= dt)
+    stest = SequenceGenerator(group='test', batch_size = batch_size, chunk_size = chunk_size, size = size, ds = ds, dt= dt)
     return strain, stest
 
 def plot_gestures_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=False):
