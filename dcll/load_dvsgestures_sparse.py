@@ -186,7 +186,7 @@ def next(hdf5_group, stats, batch_size = 32, T = 500, n_classes = 11, ds = 2, si
         labels = dset['labels'][()]
         #labels = dset['labels'].value
         cand_batch = -1
-        while cand_batch == -1: #catches some mislabeled data
+        while (not isinstance(cand_batch, np.ndarray)) and (cand_batch == -1): #catches some mislabeled data
             start_time, label = compute_start_time(labels, pad = 2*T*dt)
             batch_idx_l[i] = label-1
             #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
