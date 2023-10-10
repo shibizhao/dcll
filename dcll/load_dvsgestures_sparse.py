@@ -15,7 +15,7 @@ import h5py
 import glob
 from .events_timeslices import *
 import os
-import tqdm
+from tqdm import tqdm
 dcll_folder = os.path.dirname(__file__)
 
 mapping = { 0 :'Hand Clapping'  ,
@@ -186,7 +186,7 @@ def next(hdf5_group, stats, batch_size = 32, T = 500, n_classes = 11, ds = 2, si
         labels = dset['labels'][()]
         #labels = dset['labels'].value
         cand_batch = -1
-        while cand_batch is -1: #catches some mislabeled data
+        while cand_batch == -1: #catches some mislabeled data
             start_time, label = compute_start_time(labels, pad = 2*T*dt)
             batch_idx_l[i] = label-1
             #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
@@ -249,7 +249,7 @@ def create_events_hdf5(hdf5_filename):
 
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
-
+        print(len(fns_train), len(fns_test))
         #print("processing training data...")
         key = 0
         train_grp = f.create_group('train')
